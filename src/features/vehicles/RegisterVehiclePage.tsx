@@ -17,9 +17,19 @@ interface FormState {
   year: string
   color: string
   serialMotor: string
+  code: string
 }
 
-const EMPTY_FORM: FormState = { vin: '', plate: '', brand: '', model: '', year: '', color: '', serialMotor: '' }
+const EMPTY_FORM: FormState = {
+  vin: '',
+  plate: '',
+  brand: '',
+  model: '',
+  year: '',
+  color: '',
+  serialMotor: '',
+  code: '',
+}
 
 export function RegisterVehiclePage() {
   const userId = useAuthStore((s) => s.userId)
@@ -31,6 +41,7 @@ export function RegisterVehiclePage() {
 
   function applyScan(data: VehicleData) {
     setForm((f) => ({
+      ...f,
       vin: data.vin ?? f.vin,
       plate: data.plate ?? f.plate,
       brand: data.brand ?? f.brand,
@@ -63,20 +74,15 @@ export function RegisterVehiclePage() {
         return
       }
 
-      const { data: existing } = await supabase.from('vehicles').select('*').eq('vin', vin).maybeSingle()
-
-      if (existing && existing.status === 'active' && existing.current_owner && existing.current_owner !== userId) {
-        setError('Este vehículo ya está registrado por otro propietario.')
-        return
-      }
+      const { data: existing } = await supabase.from('vehicles').select('vin').eq('vin', vin).maybeSingle()
 
       if (existing) {
-        const { error: updErr } = await supabase
-          .from('vehicles')
-          .update({ status: 'active', current_owner: userId, plate: form.plate || existing.plate })
-          .eq('vin', vin)
-        if (updErr) throw updErr
-        setLucky(existing.current_owner !== userId)
+        const { error: claimErr } = await supabase.rpc('claim_vehicle', {
+          p_vin: vin,
+          p_code: form.code.trim() || null,
+        })
+        if (claimErr) throw claimErr
+        setLucky(true)
       } else {
         const { error: insErr } = await supabase.from('vehicles').insert({
           vin,
@@ -89,7 +95,13 @@ export function RegisterVehiclePage() {
           status: 'active',
           current_owner: userId,
         })
-        if (insErr) throw insErr
+        if (insErr) {
+          if (insErr.code === '23505') {
+            setError('Este vehículo ya está registrado a otro propietario.')
+            return
+          }
+          throw insErr
+        }
 
         const { error: ownErr } = await supabase.from('vehicle_ownership').insert({
           vin,
@@ -132,6 +144,12 @@ export function RegisterVehiclePage() {
         <Input id="year" label="Año" type="number" {...field('year')} required />
         <Input id="color" label="Color" {...field('color')} />
         <Input id="serialMotor" label="Serial de motor" {...field('serialMotor')} />
+        <Input
+          id="code"
+          label="Código de traslado (solo si te lo dieron)"
+          placeholder="TRANS-... o SRGO-..."
+          {...field('code')}
+        />
 
         {error && <p className="text-xs text-danger mb-3">{error}</p>}
         <Button type="submit" disabled={saving}>

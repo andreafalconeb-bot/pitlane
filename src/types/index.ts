@@ -67,3 +67,101 @@ export interface MaintItemView extends MaintCatalogItem {
   pct: number
   status: MaintStatus
 }
+
+export interface CustomMaintItem {
+  id: string
+  vin: string
+  owner_id: string
+  label: string
+  category: string | null
+  km_interval: number | null
+  month_interval: number | null
+  mode: MaintMode | null
+  criticality: Criticality | null
+  alarm_on: boolean
+  last_km: number | null
+  last_date: string | null
+  created_at: string
+}
+
+export type WorkshopTier = 'free' | 'paid'
+export type WorkshopLevel = 'basico' | 'tecnico' | 'especialista' | 'experto' | 'master'
+
+export interface Workshop {
+  id: string
+  owner_id: string
+  name: string
+  address: string | null
+  phone: string | null
+  tier: WorkshopTier
+  points: number
+  level: WorkshopLevel
+  active: boolean
+  created_at: string
+}
+
+export type ServiceStatus = 'pending' | 'approved' | 'modified' | 'rejected'
+
+export interface ServiceHistoryEntry {
+  id: string
+  vin: string
+  workshop_id: string | null
+  workshop_name: string
+  date: string
+  km_at_service: number | null
+  description: string
+  price: number | null
+  receipt_url: string | null
+  status: ServiceStatus
+  modified_price: number | null
+  modified_desc: string | null
+  approved_at: string | null
+  created_at: string
+}
+
+export type DocType = 'carnet' | 'titulo' | 'otro'
+
+export interface VehicleDocument {
+  id: string
+  vin: string
+  owner_id: string
+  doc_type: DocType | null
+  file_url: string
+  file_name: string | null
+  mime_type: string | null
+  file_size_kb: number | null
+  active: boolean
+  created_at: string
+}
+
+export type WorkshopVehicleStatus = 'pending' | 'invited' | 'active'
+
+export interface WorkshopVehicle {
+  id: string
+  workshop_id: string
+  vin: string
+  status: WorkshopVehicleStatus
+  invite_code: string | null
+  created_at: string
+}
+
+export type DictionaryStatus = 'pending' | 'approved' | 'rejected'
+
+export interface DictionaryTerm {
+  id: string
+  term: string
+  definition: string
+  proposed_by: string | null
+  status: DictionaryStatus
+  reviewed_by: string | null
+  created_at: string
+}
+
+export interface PointsLogEntry {
+  id: string
+  workshop_id: string
+  points: number
+  reason: string
+  ref_id: string | null
+  created_at: string
+}
