@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AlertTriangle, Bell, BellOff } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -28,14 +29,20 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
   const soon = items.filter((i) => i.status === 'soon').length
   const ok = items.length - overdue - soon
   const canToggleAlarms = plan === 'configurable'
+  const [error, setError] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   async function toggleAlarm(item: MaintItemView) {
-    await supabase
+    setError(null)
+    setTogglingId(item.id)
+    const { error: upsertErr } = await supabase
       .from('vehicle_maint')
-      .upsert(
-        { vin, catalog_id: item.id, alarm_on: !item.alarm_on },
-        { onConflict: 'vin,catalog_id' },
-      )
+      .upsert({ vin, catalog_id: item.id, alarm_on: !item.alarm_on }, { onConflict: 'vin,catalog_id' })
+    setTogglingId(null)
+    if (upsertErr) {
+      setError(upsertErr.message)
+      return
+    }
     onChanged()
   }
 
@@ -63,6 +70,7 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
           Plan configurable: toca la campana para activar o desactivar el recordatorio de cada ítem.
         </p>
       )}
+      {error && <p className="text-xs text-danger mb-2 text-center">{error}</p>}
 
       {items.map((item) => (
         <Card
@@ -88,8 +96,9 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
               {canToggleAlarms ? (
                 <button
                   onClick={() => toggleAlarm(item)}
+                  disabled={togglingId === item.id}
                   aria-label={item.alarm_on ? 'Desactivar recordatorio' : 'Activar recordatorio'}
-                  className={`min-w-11 min-h-11 flex items-center justify-center rounded-lg border ${
+                  className={`min-w-11 min-h-11 flex items-center justify-center rounded-lg border disabled:opacity-50 ${
                     item.alarm_on ? 'border-accent text-accent' : 'border-border text-muted'
                   }`}
                 >
