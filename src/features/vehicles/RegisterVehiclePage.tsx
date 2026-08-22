@@ -5,9 +5,11 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { DocumentScanner } from '@/features/scanner/DocumentScanner'
+import { VinPhotoButton } from '@/features/scanner/VinPhotoButton'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import type { VehicleData } from '@/lib/ocr'
+import type { MaintPlan } from '@/types'
 
 interface FormState {
   vin: string
@@ -31,12 +33,20 @@ const EMPTY_FORM: FormState = {
   code: '',
 }
 
+const PLAN_OPTIONS: { id: MaintPlan; label: string; hint: string }[] = [
+  { id: 'basic', label: 'Básico', hint: '23 ítems esenciales' },
+  { id: 'advanced', label: 'Avanzado', hint: 'Catálogo completo (51)' },
+  { id: 'configurable', label: 'Configurable', hint: 'Tú activas cada ítem' },
+]
+
 export function RegisterVehiclePage() {
   const userId = useAuthStore((s) => s.userId)
   const navigate = useNavigate()
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [plan, setPlan] = useState<MaintPlan>('basic')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [vinScanError, setVinScanError] = useState<string | null>(null)
   const [lucky, setLucky] = useState(false)
 
   function applyScan(data: VehicleData) {
@@ -52,8 +62,9 @@ export function RegisterVehiclePage() {
     }))
   }
 
-  function applyVin(vin: string) {
-    setForm((f) => ({ ...f, vin }))
+  function handleVinPhoto(vin: string | null) {
+    setVinScanError(vin ? null : 'No se pudo leer el VIN en esa foto. Intenta con más luz o escríbelo a mano.')
+    if (vin) setForm((f) => ({ ...f, vin }))
   }
 
   function field(key: keyof FormState) {
@@ -84,6 +95,7 @@ export function RegisterVehiclePage() {
         const { error: claimErr } = await supabase.rpc('claim_vehicle', {
           p_vin: vin,
           p_code: form.code.trim() || null,
+          p_plan: plan,
         })
         if (claimErr) throw claimErr
         setLucky(true)
@@ -110,7 +122,7 @@ export function RegisterVehiclePage() {
         const { error: ownErr } = await supabase.from('vehicle_ownership').insert({
           vin,
           owner_id: userId,
-          plan: 'basic',
+          plan,
         })
         if (ownErr) throw ownErr
       }
@@ -128,7 +140,7 @@ export function RegisterVehiclePage() {
       <h1 className="text-lg font-semibold mb-3">Registrar vehículo</h1>
 
       <Card className="mb-3">
-        <DocumentScanner onResult={applyScan} onVinResult={applyVin} />
+        <DocumentScanner onResult={applyScan} />
       </Card>
 
       {lucky && (
@@ -141,7 +153,16 @@ export function RegisterVehiclePage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <Input id="vin" label="VIN (17 caracteres)" maxLength={17} {...field('vin')} required />
+        <div className="flex gap-2 items-end mb-2">
+          <div className="flex-1">
+            <Input id="vin" label="VIN (17 caracteres)" maxLength={17} {...field('vin')} required />
+          </div>
+          <div className="mb-2">
+            <VinPhotoButton onResult={handleVinPhoto} />
+          </div>
+        </div>
+        {vinScanError && <p className="text-xs text-warning -mt-1 mb-3">{vinScanError}</p>}
+
         <Input id="plate" label="Placa" {...field('plate')} />
         <Input id="brand" label="Marca" {...field('brand')} required />
         <Input id="model" label="Modelo" {...field('model')} required />
@@ -154,6 +175,23 @@ export function RegisterVehiclePage() {
           placeholder="TRANS-... o SRGO-..."
           {...field('code')}
         />
+
+        <label className="block text-xs text-muted mb-1.5 mt-1">Plan de mantenimiento</label>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {PLAN_OPTIONS.map((p) => (
+            <button
+              type="button"
+              key={p.id}
+              onClick={() => setPlan(p.id)}
+              className={`text-left rounded-lg border px-2.5 py-2.5 min-h-11 ${
+                plan === p.id ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+              }`}
+            >
+              <div className="text-xs font-semibold">{p.label}</div>
+              <div className="text-[10px] text-muted mt-0.5">{p.hint}</div>
+            </button>
+          ))}
+        </div>
 
         {error && <p className="text-xs text-danger mb-3">{error}</p>}
         <Button type="submit" disabled={saving}>

@@ -1,18 +1,16 @@
 import { useRef, useState } from 'react'
-import { Camera, Loader2, ChevronDown, ChevronUp, ScanLine } from 'lucide-react'
-import { scanVehicleDocument, scanVinPhoto } from '@/lib/ocr-runner'
+import { Camera, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { scanVehicleDocument } from '@/lib/ocr-runner'
 import type { VehicleData } from '@/lib/ocr'
 import { Button } from '@/components/ui/Button'
 
 interface DocumentScannerProps {
   onResult: (data: VehicleData) => void
-  onVinResult: (vin: string) => void
 }
 
-export function DocumentScanner({ onResult, onVinResult }: DocumentScannerProps) {
+export function DocumentScanner({ onResult }: DocumentScannerProps) {
   const docInputRef = useRef<HTMLInputElement>(null)
-  const vinInputRef = useRef<HTMLInputElement>(null)
-  const [scanning, setScanning] = useState<'doc' | 'vin' | null>(null)
+  const [scanning, setScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rawText, setRawText] = useState<string | null>(null)
   const [showRaw, setShowRaw] = useState(false)
@@ -22,7 +20,7 @@ export function DocumentScanner({ onResult, onVinResult }: DocumentScannerProps)
     if (!file) return
     setError(null)
     setRawText(null)
-    setScanning('doc')
+    setScanning(true)
     try {
       const { data, rawText: text } = await scanVehicleDocument(file)
       setRawText(text)
@@ -31,36 +29,14 @@ export function DocumentScanner({ onResult, onVinResult }: DocumentScannerProps)
           'No se pudieron leer los datos automáticamente. Revisa el texto detectado abajo, o completa el formulario a mano.',
         )
       } else if (!data.vin) {
-        setError('Se leyeron los datos del vehículo, pero no el VIN. Usa "Foto del VIN" para escanearlo aparte.')
+        setError('Se leyeron los datos del vehículo, pero no el VIN. Usa el botón de cámara junto al campo VIN.')
       }
       onResult(data)
     } catch {
       setError('Error al procesar el documento. Intenta de nuevo.')
     } finally {
-      setScanning(null)
+      setScanning(false)
       if (docInputRef.current) docInputRef.current.value = ''
-    }
-  }
-
-  async function handleVinFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setError(null)
-    setRawText(null)
-    setScanning('vin')
-    try {
-      const { vin, rawText: text } = await scanVinPhoto(file)
-      setRawText(text)
-      if (!vin) {
-        setError('No se pudo leer el VIN en esa foto. Revisa el texto detectado abajo o escríbelo a mano.')
-      } else {
-        onVinResult(vin)
-      }
-    } catch {
-      setError('Error al procesar la foto. Intenta de nuevo.')
-    } finally {
-      setScanning(null)
-      if (vinInputRef.current) vinInputRef.current.value = ''
     }
   }
 
@@ -74,35 +50,16 @@ export function DocumentScanner({ onResult, onVinResult }: DocumentScannerProps)
         className="hidden"
         onChange={handleDocFile}
       />
-      <input
-        ref={vinInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleVinFile}
-      />
 
       <Button
         type="button"
         variant="secondary"
-        disabled={scanning !== null}
+        disabled={scanning}
         onClick={() => docInputRef.current?.click()}
-        className="flex items-center justify-center gap-2 mb-2"
-      >
-        {scanning === 'doc' ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-        {scanning === 'doc' ? 'Leyendo documento…' : 'Escanear certificado (Cédula/INTT)'}
-      </Button>
-
-      <Button
-        type="button"
-        variant="secondary"
-        disabled={scanning !== null}
-        onClick={() => vinInputRef.current?.click()}
         className="flex items-center justify-center gap-2"
       >
-        {scanning === 'vin' ? <Loader2 size={16} className="animate-spin" /> : <ScanLine size={16} />}
-        {scanning === 'vin' ? 'Leyendo VIN…' : 'Foto del VIN (parabrisas/chasis)'}
+        {scanning ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+        {scanning ? 'Leyendo documento…' : 'Escanear certificado (Cédula/INTT)'}
       </Button>
 
       {error && <p className="text-xs text-warning mt-2">{error}</p>}
