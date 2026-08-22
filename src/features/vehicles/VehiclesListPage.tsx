@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Send, Archive, Copy } from 'lucide-react'
+import { Plus, Send, Archive, Copy, Pencil } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Sheet } from '@/components/ui/Sheet'
+import { EditVehicleSheet } from './EditVehicleSheet'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { generateTransferCode } from '@/lib/codes'
@@ -17,6 +18,7 @@ export function VehiclesListPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [actionVehicle, setActionVehicle] = useState<Vehicle | null>(null)
+  const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null)
   const [transferCode, setTransferCode] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -117,15 +119,25 @@ export function VehiclesListPage() {
             <Badge tone={v.status === 'active' ? 'success' : 'neutral'}>{v.status}</Badge>
           </div>
           {canManage && v.status === 'active' && (
-            <button
-              onClick={() => openActions(v)}
-              className="text-xs text-accent font-semibold mt-2.5 min-h-11 flex items-center"
-            >
-              Transferir / dar de baja
-            </button>
+            <div className="flex gap-4 mt-2.5">
+              <button
+                onClick={() => setEditVehicle(v)}
+                className="text-xs text-accent font-semibold min-h-11 flex items-center gap-1"
+              >
+                <Pencil size={12} /> Editar
+              </button>
+              <button
+                onClick={() => openActions(v)}
+                className="text-xs text-muted font-semibold min-h-11 flex items-center"
+              >
+                Transferir / dar de baja
+              </button>
+            </div>
           )}
         </Card>
       ))}
+
+      <EditVehicleSheet vehicle={editVehicle} onClose={() => setEditVehicle(null)} onSaved={reload} />
 
       <Sheet open={!!actionVehicle} onClose={() => setActionVehicle(null)} title={actionVehicle?.plate ?? undefined}>
         {actionVehicle && !transferCode && (
