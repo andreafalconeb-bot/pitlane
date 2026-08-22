@@ -149,7 +149,9 @@ export function MaintenanceDashboardPage() {
             ))}
           </div>
 
-          {tab === 'plan' && <PlanItemsPanel items={items} />}
+          {tab === 'plan' && (
+            <PlanItemsPanel vin={selected.vin} plan={selected.plan} items={items} onChanged={reloadVehicleData} />
+          )}
           {tab === 'custom' && (
             <CustomItemsPanel
               vin={selected.vin}

@@ -1,7 +1,8 @@
 import { AlertTriangle, Bell, BellOff } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import type { MaintItemView } from '@/types'
+import { supabase } from '@/lib/supabase'
+import type { MaintItemView, MaintPlan } from '@/types'
 
 const STATUS_LABEL: Record<MaintItemView['status'], string> = {
   overdue: 'VENCIDO',
@@ -15,10 +16,28 @@ const STATUS_TONE: Record<MaintItemView['status'], 'danger' | 'warning' | 'succe
   ok: 'success',
 }
 
-export function PlanItemsPanel({ items }: { items: MaintItemView[] }) {
+interface PlanItemsPanelProps {
+  vin: string
+  plan: MaintPlan
+  items: MaintItemView[]
+  onChanged: () => void
+}
+
+export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelProps) {
   const overdue = items.filter((i) => i.status === 'overdue').length
   const soon = items.filter((i) => i.status === 'soon').length
   const ok = items.length - overdue - soon
+  const canToggleAlarms = plan === 'configurable'
+
+  async function toggleAlarm(item: MaintItemView) {
+    await supabase
+      .from('vehicle_maint')
+      .upsert(
+        { vin, catalog_id: item.id, alarm_on: !item.alarm_on },
+        { onConflict: 'vin,catalog_id' },
+      )
+    onChanged()
+  }
 
   return (
     <>
@@ -38,6 +57,12 @@ export function PlanItemsPanel({ items }: { items: MaintItemView[] }) {
           </div>
         </div>
       </Card>
+
+      {canToggleAlarms && (
+        <p className="text-[10px] text-muted mb-2 text-center">
+          Plan configurable: toca la campana para activar o desactivar el recordatorio de cada ítem.
+        </p>
+      )}
 
       {items.map((item) => (
         <Card
@@ -59,7 +84,21 @@ export function PlanItemsPanel({ items }: { items: MaintItemView[] }) {
                     : `Cada ${item.month_interval} meses`}
               </div>
             </div>
-            <Badge tone={STATUS_TONE[item.status]}>{STATUS_LABEL[item.status]}</Badge>
+            <div className="flex items-center gap-1.5">
+              {canToggleAlarms ? (
+                <button
+                  onClick={() => toggleAlarm(item)}
+                  aria-label={item.alarm_on ? 'Desactivar recordatorio' : 'Activar recordatorio'}
+                  className={`min-w-11 min-h-11 flex items-center justify-center rounded-lg border ${
+                    item.alarm_on ? 'border-accent text-accent' : 'border-border text-muted'
+                  }`}
+                >
+                  {item.alarm_on ? <Bell size={16} /> : <BellOff size={16} />}
+                </button>
+              ) : (
+                <Badge tone={STATUS_TONE[item.status]}>{STATUS_LABEL[item.status]}</Badge>
+              )}
+            </div>
           </div>
           <div className="h-1 rounded-full bg-border overflow-hidden">
             <div
@@ -69,14 +108,10 @@ export function PlanItemsPanel({ items }: { items: MaintItemView[] }) {
               style={{ width: `${item.pct}%` }}
             />
           </div>
-          {!item.alarm_on && (
-            <div className="flex items-center gap-1 text-[10px] text-muted mt-1.5">
-              <BellOff size={11} /> Recordatorio desactivado
-            </div>
-          )}
-          {item.alarm_on && item.status !== 'ok' && (
-            <div className="flex items-center gap-1 text-[10px] text-muted mt-1.5">
-              <Bell size={11} /> Recordatorio activo
+          {canToggleAlarms && (
+            <div className="flex items-center justify-between mt-1.5">
+              <Badge tone={STATUS_TONE[item.status]}>{STATUS_LABEL[item.status]}</Badge>
+              {!item.alarm_on && <span className="text-[10px] text-muted">Recordatorio desactivado</span>}
             </div>
           )}
         </Card>
