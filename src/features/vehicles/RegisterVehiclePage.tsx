@@ -52,6 +52,10 @@ export function RegisterVehiclePage() {
     }))
   }
 
+  function applyVin(vin: string) {
+    setForm((f) => ({ ...f, vin }))
+  }
+
   function field(key: keyof FormState) {
     return {
       value: form[key],
@@ -124,7 +128,7 @@ export function RegisterVehiclePage() {
       <h1 className="text-lg font-semibold mb-3">Registrar vehículo</h1>
 
       <Card className="mb-3">
-        <DocumentScanner onResult={applyScan} />
+        <DocumentScanner onResult={applyScan} onVinResult={applyVin} />
       </Card>
 
       {lucky && (

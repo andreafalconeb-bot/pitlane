@@ -37,19 +37,8 @@ function isValidVin(v: string): boolean {
   return true
 }
 
-export function extraerDatosINTT(rawText: string): VehicleData {
-  const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
-  const UP = rawText.toUpperCase()
-  const result: VehicleData = {}
-
-  // Detect reverse side of document (contains traffic regulations text)
-  result._isReverse = (
-    UP.includes('REGLAMENTO') ||
-    UP.includes('ARTICULO') ||
-    (UP.includes('TERRITORIO NACIONAL') && UP.includes('OBLIGATORIO'))
-  )
-
-  // ── VIN ────────────────────────────────────────────────────
+// ── VIN detection (shared by extraerDatosINTT and standalone VIN scans) ──
+function detectVin(UP: string): string | null {
   // Strategy 1: VIN in summary line format "VIN-1-1" (clearest)
   const vinInSummary = UP.match(/\b([A-Z0-9]{17})-[12]-1\b/)
 
@@ -67,10 +56,34 @@ export function extraerDatosINTT(rawText: string): VehicleData {
   }
 
   const vinRaw = (vinInSummary?.[1]) || (vinLabeled?.[1]) || vinDirect
-  if (vinRaw) {
-    const clean = vinRaw.replace(/[.\-\s]/g, '').substring(0, 17)
-    if (clean.length >= 10) result.vin = clean
-  }
+  if (!vinRaw) return null
+  const clean = vinRaw.replace(/[.\-\s]/g, '').substring(0, 17)
+  return clean.length >= 10 ? clean : null
+}
+
+/**
+ * Standalone VIN extraction — used for the "second photo" flow (a direct
+ * shot of the VIN plate/etching) when the main document doesn't carry it,
+ * e.g. a Certificado de Circulación that omits the VIN field.
+ */
+export function extraerVinDeTexto(rawText: string): string | null {
+  return detectVin(rawText.toUpperCase())
+}
+
+export function extraerDatosINTT(rawText: string): VehicleData {
+  const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+  const UP = rawText.toUpperCase()
+  const result: VehicleData = {}
+
+  // Detect reverse side of document (contains traffic regulations text)
+  result._isReverse = (
+    UP.includes('REGLAMENTO') ||
+    UP.includes('ARTICULO') ||
+    (UP.includes('TERRITORIO NACIONAL') && UP.includes('OBLIGATORIO'))
+  )
+
+  const vin = detectVin(UP)
+  if (vin) result.vin = vin
 
   // ── PLATE ──────────────────────────────────────────────────
   // OCR may read "Praca" instead of "Placa", "A10EW8A" vs "AlOEW8A"
