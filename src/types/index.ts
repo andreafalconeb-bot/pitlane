@@ -57,6 +57,8 @@ export interface VehicleMaintState {
   last_date: string | null
   alarm_on: boolean
   paused: boolean
+  km_interval_override: number | null
+  month_interval_override: number | null
 }
 
 export interface MaintItemView extends MaintCatalogItem {
@@ -66,6 +68,8 @@ export interface MaintItemView extends MaintCatalogItem {
   paused: boolean
   pct: number
   status: MaintStatus
+  /** true when km_interval/month_interval reflect a per-vehicle override rather than the catalog default. */
+  isCustomInterval: boolean
 }
 
 export interface CustomMaintItem {

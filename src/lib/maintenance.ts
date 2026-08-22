@@ -98,15 +98,19 @@ export function buildMaintView(
     const lastKm = st?.last_km ?? null
     const lastDate = st?.last_date ?? null
 
+    const kmInterval = st?.km_interval_override ?? item.km_interval
+    const monthInterval = st?.month_interval_override ?? item.month_interval
+    const isCustomInterval = st?.km_interval_override != null || st?.month_interval_override != null
+
     let pctKm: number | null = null
-    if (item.km_interval && lastKm !== null) {
-      pctKm = Math.min(150, Math.round(((currentKm - lastKm) / item.km_interval) * 100))
+    if (kmInterval && lastKm !== null) {
+      pctKm = Math.min(150, Math.round(((currentKm - lastKm) / kmInterval) * 100))
     }
 
     let pctTime: number | null = null
     const monthsElapsed = monthsSince(lastDate)
     if (monthsElapsed !== null) {
-      pctTime = Math.min(150, Math.round((monthsElapsed / item.month_interval) * 100))
+      pctTime = Math.min(150, Math.round((monthsElapsed / monthInterval) * 100))
     }
 
     const pct = Math.max(pctKm ?? 0, pctTime ?? 0, 0)
@@ -114,6 +118,9 @@ export function buildMaintView(
 
     return {
       ...item,
+      km_interval: kmInterval,
+      month_interval: monthInterval,
+      isCustomInterval,
       last_km: lastKm,
       last_date: lastDate,
       alarm_on: st?.alarm_on ?? true,

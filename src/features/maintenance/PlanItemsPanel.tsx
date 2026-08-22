@@ -1,7 +1,10 @@
-import { useState } from 'react'
-import { AlertTriangle, Bell, BellOff } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { AlertTriangle, Bell, BellOff, Pencil, RotateCcw } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Sheet } from '@/components/ui/Sheet'
 import { supabase } from '@/lib/supabase'
 import type { MaintItemView, MaintPlan } from '@/types'
 
@@ -31,6 +34,7 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
   const canToggleAlarms = plan === 'configurable'
   const [error, setError] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [intervalItem, setIntervalItem] = useState<MaintItemView | null>(null)
 
   async function toggleAlarm(item: MaintItemView) {
     setError(null)
@@ -84,13 +88,18 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
                 {item.criticality === 'alta' && <AlertTriangle size={11} className="text-danger" />}
                 {item.label}
               </div>
-              <div className="text-[10px] text-muted mt-0.5">
+              <button
+                onClick={() => setIntervalItem(item)}
+                className="text-[10px] text-muted mt-0.5 flex items-center gap-1 min-h-6"
+              >
                 {item.km_interval && item.month_interval
                   ? `${item.km_interval.toLocaleString()} km ó ${item.month_interval}m`
                   : item.km_interval
                     ? `Cada ${item.km_interval.toLocaleString()} km`
                     : `Cada ${item.month_interval} meses`}
-              </div>
+                {item.isCustomInterval && <Badge tone="accent">PERSONALIZADO</Badge>}
+                <Pencil size={10} />
+              </button>
             </div>
             <div className="flex items-center gap-1.5">
               {canToggleAlarms ? (
@@ -125,6 +134,85 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
           )}
         </Card>
       ))}
+
+      <IntervalEditSheet vin={vin} item={intervalItem} onClose={() => setIntervalItem(null)} onSaved={onChanged} />
     </>
+  )
+}
+
+interface IntervalEditSheetProps {
+  vin: string
+  item: MaintItemView | null
+  onClose: () => void
+  onSaved: () => void
+}
+
+function IntervalEditSheet({ vin, item, onClose, onSaved }: IntervalEditSheetProps) {
+  const [km, setKm] = useState('')
+  const [months, setMonths] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!item) return
+    setKm(String(item.km_interval ?? ''))
+    setMonths(String(item.month_interval ?? ''))
+    setError(null)
+  }, [item])
+
+  async function save(kmValue: number | null, monthsValue: number | null) {
+    if (!item) return
+    setSaving(true)
+    setError(null)
+    const { error: upsertErr } = await supabase.from('vehicle_maint').upsert(
+      { vin, catalog_id: item.id, km_interval_override: kmValue, month_interval_override: monthsValue },
+      { onConflict: 'vin,catalog_id' },
+    )
+    setSaving(false)
+    if (upsertErr) {
+      setError(upsertErr.message)
+      return
+    }
+    onSaved()
+    onClose()
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    save(km ? parseInt(km, 10) : null, months ? parseInt(months, 10) : null)
+  }
+
+  return (
+    <Sheet
+      open={!!item}
+      onClose={onClose}
+      title={item ? `Intervalo — ${item.label}` : undefined}
+    >
+      {item && (
+        <form onSubmit={handleSubmit}>
+          <Input id="i-km" label="Cada cuántos km" type="number" value={km} onChange={(e) => setKm(e.target.value)} />
+          <Input
+            id="i-months"
+            label="Cada cuántos meses"
+            type="number"
+            value={months}
+            onChange={(e) => setMonths(e.target.value)}
+          />
+          {error && <p className="text-xs text-danger mb-3">{error}</p>}
+          <Button type="submit" disabled={saving} className="mb-2">
+            {saving ? 'Guardando…' : 'Guardar intervalo'}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={saving}
+            onClick={() => save(null, null)}
+            className="flex items-center justify-center gap-2"
+          >
+            <RotateCcw size={14} /> Restablecer a valores de fábrica
+          </Button>
+        </form>
+      )}
+    </Sheet>
   )
 }
