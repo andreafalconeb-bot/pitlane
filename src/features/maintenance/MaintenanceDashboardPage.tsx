@@ -150,7 +150,13 @@ export function MaintenanceDashboardPage() {
           </div>
 
           {tab === 'plan' && (
-            <PlanItemsPanel vin={selected.vin} plan={selected.plan} items={items} onChanged={reloadVehicleData} />
+            <PlanItemsPanel
+              vin={selected.vin}
+              plan={selected.plan}
+              currentKm={selected.km_current ?? 0}
+              items={items}
+              onChanged={reloadVehicleData}
+            />
           )}
           {tab === 'custom' && (
             <CustomItemsPanel
@@ -160,7 +166,14 @@ export function MaintenanceDashboardPage() {
               onChanged={reloadVehicleData}
             />
           )}
-          {tab === 'historial' && <ServiceHistoryPanel services={services} onChanged={reloadVehicleData} />}
+          {tab === 'historial' && (
+            <ServiceHistoryPanel
+              vin={selected.vin}
+              currentKm={selected.km_current ?? 0}
+              services={services}
+              onChanged={reloadVehicleData}
+            />
+          )}
         </>
       )}
     </PageShell>

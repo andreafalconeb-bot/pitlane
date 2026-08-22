@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Bell, BellOff, Pencil, RotateCcw } from 'lucide-react'
+import { AlertTriangle, Bell, BellOff, CheckCircle2, Pencil, RotateCcw } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Sheet } from '@/components/ui/Sheet'
 import { supabase } from '@/lib/supabase'
+import { RegisterServiceSheet } from './RegisterServiceSheet'
 import type { MaintItemView, MaintPlan } from '@/types'
 
 const STATUS_LABEL: Record<MaintItemView['status'], string> = {
@@ -23,11 +24,12 @@ const STATUS_TONE: Record<MaintItemView['status'], 'danger' | 'warning' | 'succe
 interface PlanItemsPanelProps {
   vin: string
   plan: MaintPlan
+  currentKm: number
   items: MaintItemView[]
   onChanged: () => void
 }
 
-export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelProps) {
+export function PlanItemsPanel({ vin, plan, currentKm, items, onChanged }: PlanItemsPanelProps) {
   const overdue = items.filter((i) => i.status === 'overdue').length
   const soon = items.filter((i) => i.status === 'soon').length
   const ok = items.length - overdue - soon
@@ -35,6 +37,7 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
   const [error, setError] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [intervalItem, setIntervalItem] = useState<MaintItemView | null>(null)
+  const [serviceItem, setServiceItem] = useState<MaintItemView | null>(null)
 
   async function toggleAlarm(item: MaintItemView) {
     setError(null)
@@ -132,10 +135,26 @@ export function PlanItemsPanel({ vin, plan, items, onChanged }: PlanItemsPanelPr
               {!item.alarm_on && <span className="text-[10px] text-muted">Recordatorio desactivado</span>}
             </div>
           )}
+          <button
+            onClick={() => setServiceItem(item)}
+            className="text-xs text-accent font-semibold mt-2 min-h-9 flex items-center gap-1.5"
+          >
+            <CheckCircle2 size={14} /> Marcar como realizado
+          </button>
         </Card>
       ))}
 
       <IntervalEditSheet vin={vin} item={intervalItem} onClose={() => setIntervalItem(null)} onSaved={onChanged} />
+
+      <RegisterServiceSheet
+        open={!!serviceItem}
+        vin={vin}
+        currentKm={currentKm}
+        catalogId={serviceItem?.id}
+        defaultDescription={serviceItem?.label}
+        onClose={() => setServiceItem(null)}
+        onSaved={onChanged}
+      />
     </>
   )
 }

@@ -1,25 +1,29 @@
 import { useState } from 'react'
-import { Check, X, Pencil } from 'lucide-react'
+import { Check, X, Pencil, Plus } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Sheet } from '@/components/ui/Sheet'
 import { supabase } from '@/lib/supabase'
+import { RegisterServiceSheet } from './RegisterServiceSheet'
 import type { ServiceHistoryEntry } from '@/types'
 
 interface ServiceHistoryPanelProps {
+  vin: string
+  currentKm: number
   services: ServiceHistoryEntry[]
   onChanged: () => void
 }
 
-export function ServiceHistoryPanel({ services, onChanged }: ServiceHistoryPanelProps) {
+export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: ServiceHistoryPanelProps) {
   const pending = services.filter((s) => s.status === 'pending')
   const resolved = services.filter((s) => s.status !== 'pending')
   const [modifyTarget, setModifyTarget] = useState<ServiceHistoryEntry | null>(null)
   const [modDesc, setModDesc] = useState('')
   const [modPrice, setModPrice] = useState('')
   const [busy, setBusy] = useState(false)
+  const [registerOpen, setRegisterOpen] = useState(false)
 
   async function approve(s: ServiceHistoryEntry) {
     setBusy(true)
@@ -64,6 +68,14 @@ export function ServiceHistoryPanel({ services, onChanged }: ServiceHistoryPanel
 
   return (
     <div>
+      <Button
+        onClick={() => setRegisterOpen(true)}
+        variant="secondary"
+        className="flex items-center justify-center gap-2 mb-3"
+      >
+        <Plus size={16} /> Registrar trabajo realizado
+      </Button>
+
       {pending.length > 0 && (
         <>
           <div className="text-[10px] font-bold tracking-widest uppercase text-muted mb-2">
@@ -124,6 +136,14 @@ export function ServiceHistoryPanel({ services, onChanged }: ServiceHistoryPanel
           </Button>
         </form>
       </Sheet>
+
+      <RegisterServiceSheet
+        open={registerOpen}
+        vin={vin}
+        currentKm={currentKm}
+        onClose={() => setRegisterOpen(false)}
+        onSaved={onChanged}
+      />
     </div>
   )
 }
