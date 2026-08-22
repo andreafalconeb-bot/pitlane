@@ -8,6 +8,8 @@ export type Criticality = 'alta' | 'media' | 'baja'
 
 export type MaintStatus = 'overdue' | 'soon' | 'ok'
 
+export type KmCheckFreq = 'never' | 'monthly' | 'quarterly'
+
 export interface Profile {
   id: string
   role: Role

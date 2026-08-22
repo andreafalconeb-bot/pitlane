@@ -78,7 +78,11 @@ export function RegisterServiceSheet({
       }
 
       if (kmValue !== null && kmValue > currentKm) {
-        await supabase.from('vehicle_ownership').update({ km_current: kmValue }).eq('vin', vin).is('ended_at', null)
+        await supabase
+          .from('vehicle_ownership')
+          .update({ km_current: kmValue, km_current_updated_at: new Date().toISOString() })
+          .eq('vin', vin)
+          .is('ended_at', null)
       }
 
       onSaved()

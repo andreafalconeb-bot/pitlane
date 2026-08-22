@@ -8,11 +8,14 @@ import { buildMaintView } from '@/lib/maintenance'
 import { PlanItemsPanel } from './PlanItemsPanel'
 import { CustomItemsPanel } from './CustomItemsPanel'
 import { ServiceHistoryPanel } from './ServiceHistoryPanel'
-import type { CustomMaintItem, MaintPlan, ServiceHistoryEntry, Vehicle, VehicleMaintState } from '@/types'
+import { KmCheckBanner } from './KmCheckBanner'
+import type { CustomMaintItem, KmCheckFreq, MaintPlan, ServiceHistoryEntry, Vehicle, VehicleMaintState } from '@/types'
 
 interface OwnedVehicle extends Vehicle {
   plan: MaintPlan
   km_current: number
+  km_current_updated_at: string | null
+  km_check_freq: KmCheckFreq
 }
 
 type Tab = 'plan' | 'custom' | 'historial'
@@ -37,7 +40,7 @@ export function MaintenanceDashboardPage() {
     if (!userId) return
     const { data: own } = await supabase
       .from('vehicle_ownership')
-      .select('vin, plan, km_current, vehicles(*)')
+      .select('vin, plan, km_current, km_current_updated_at, km_check_freq, vehicles(*)')
       .eq('owner_id', userId)
       .is('ended_at', null)
 
@@ -47,6 +50,8 @@ export function MaintenanceDashboardPage() {
         ...(row.vehicles as unknown as Vehicle),
         plan: row.plan as MaintPlan,
         km_current: row.km_current as number,
+        km_current_updated_at: row.km_current_updated_at as string | null,
+        km_check_freq: row.km_check_freq as KmCheckFreq,
       }))
 
     setVehicles(list)
@@ -134,6 +139,14 @@ export function MaintenanceDashboardPage() {
             </div>
             <Badge tone="accent">Plan {selected.plan}</Badge>
           </Card>
+
+          <KmCheckBanner
+            vin={selected.vin}
+            currentKm={selected.km_current ?? 0}
+            updatedAt={selected.km_current_updated_at}
+            freq={selected.km_check_freq}
+            onSaved={reloadVehicles}
+          />
 
           <div className="flex gap-1 mb-3 bg-surface border border-border rounded-lg p-1">
             {TABS.map((t) => (
