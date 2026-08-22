@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { PageShell } from '@/components/layout/PageShell'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -47,6 +48,8 @@ export function RegisterVehiclePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [vinScanError, setVinScanError] = useState<string | null>(null)
+  const [vinRawText, setVinRawText] = useState<string | null>(null)
+  const [showVinRaw, setShowVinRaw] = useState(false)
   const [lucky, setLucky] = useState(false)
 
   function applyScan(data: VehicleData) {
@@ -62,8 +65,9 @@ export function RegisterVehiclePage() {
     }))
   }
 
-  function handleVinPhoto(vin: string | null) {
+  function handleVinPhoto(vin: string | null, rawText: string) {
     setVinScanError(vin ? null : 'No se pudo leer el VIN en esa foto. Intenta con más luz o escríbelo a mano.')
+    setVinRawText(vin ? null : rawText)
     if (vin) setForm((f) => ({ ...f, vin }))
   }
 
@@ -161,7 +165,24 @@ export function RegisterVehiclePage() {
             <VinPhotoButton onResult={handleVinPhoto} />
           </div>
         </div>
-        {vinScanError && <p className="text-xs text-warning -mt-1 mb-3">{vinScanError}</p>}
+        {vinScanError && <p className="text-xs text-warning -mt-1 mb-1">{vinScanError}</p>}
+        {vinRawText && (
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setShowVinRaw((v) => !v)}
+              className="text-[10px] text-muted flex items-center gap-1 min-h-8"
+            >
+              {showVinRaw ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              Ver texto detectado
+            </button>
+            {showVinRaw && (
+              <pre className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap break-words bg-[#0D1117] border border-border rounded-lg p-2 text-[10px] text-muted">
+                {vinRawText}
+              </pre>
+            )}
+          </div>
+        )}
 
         <Input id="plate" label="Placa" {...field('plate')} />
         <Input id="brand" label="Marca" {...field('brand')} required />
