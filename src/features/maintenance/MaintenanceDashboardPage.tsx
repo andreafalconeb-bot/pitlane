@@ -9,6 +9,7 @@ import { PlanItemsPanel } from './PlanItemsPanel'
 import { CustomItemsPanel } from './CustomItemsPanel'
 import { ServiceHistoryPanel } from './ServiceHistoryPanel'
 import { KmCheckBanner } from './KmCheckBanner'
+import { ProjectedAlarmBanner } from './ProjectedAlarmBanner'
 import { EditVehicleSheet } from '@/features/vehicles/EditVehicleSheet'
 import type { CustomMaintItem, KmCheckFreq, MaintPlan, ServiceHistoryEntry, Vehicle, VehicleMaintState } from '@/types'
 
@@ -163,6 +164,16 @@ export function MaintenanceDashboardPage() {
 
       {selected && (
         <>
+          <ProjectedAlarmBanner
+            vin={selected.vin}
+            currentKm={selected.km_current ?? 0}
+            kmUpdatedAt={selected.km_current_updated_at}
+            kmMonthly={selected.km_monthly ?? 0}
+            plan={selected.plan}
+            maintState={maintState}
+            onSaved={refreshAll}
+          />
+
           <Card className="mb-3 flex items-center justify-between">
             <div className="text-sm font-semibold">
               {selected.brand} {selected.model}

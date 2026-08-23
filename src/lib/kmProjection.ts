@@ -6,23 +6,36 @@ export interface KmDataPoint {
 }
 
 /**
- * Average km/month from the vehicle's actual recorded readings (earliest
- * vs. latest date+km on file), not a manually-typed guess. Needs at least
- * two readings spanning some real time to mean anything.
+ * Average km/month from the vehicle's actual recorded readings, fit by
+ * ordinary least squares across every point rather than just comparing the
+ * earliest and latest — a single unusual reading (a road trip month, a
+ * data-entry slip) moves a two-point comparison a lot; least squares barely
+ * moves, since it's weighing that point against every other one too.
+ * Needs at least 3 readings to be worth fitting a line to.
  */
 export function calculateMonthlyKm(points: KmDataPoint[]): number | null {
   const valid = points.filter((p) => p.date && Number.isFinite(p.km))
-  if (valid.length < 2) return null
+  if (valid.length < 3) return null
 
   const sorted = [...valid].sort((a, b) => a.date.localeCompare(b.date))
-  const first = sorted[0]
-  const last = sorted[sorted.length - 1]
+  const day0 = new Date(sorted[0].date).getTime()
+  const xs = sorted.map((p) => (new Date(p.date).getTime() - day0) / MS_PER_MONTH)
+  const ys = sorted.map((p) => p.km)
 
-  const monthsBetween = (new Date(last.date).getTime() - new Date(first.date).getTime()) / MS_PER_MONTH
-  const kmDelta = last.km - first.km
-  if (monthsBetween < 0.5 || kmDelta <= 0) return null
+  const n = xs.length
+  const meanX = xs.reduce((a, b) => a + b, 0) / n
+  const meanY = ys.reduce((a, b) => a + b, 0) / n
 
-  return Math.round(kmDelta / monthsBetween)
+  let num = 0
+  let den = 0
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (ys[i] - meanY)
+    den += (xs[i] - meanX) ** 2
+  }
+  if (den === 0) return null
+
+  const slopePerMonth = num / den
+  return slopePerMonth > 0 ? Math.round(slopePerMonth) : null
 }
 
 /** Projects today's likely km from the last confirmed reading plus the
