@@ -244,6 +244,13 @@ export function MaintenanceDashboardPage() {
             <ServiceHistoryPanel
               vin={selected.vin}
               ownerId={selected.current_owner ?? ''}
+              vehicle={{
+                vin: selected.vin,
+                brand: selected.brand,
+                model: selected.model,
+                year: selected.year,
+                plate: selected.plate,
+              }}
               currentKm={selected.km_current ?? 0}
               kmUpdatedAt={selected.km_current_updated_at}
               kmMonthly={selected.km_monthly ?? 0}

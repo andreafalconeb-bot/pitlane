@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, X, Pencil, Plus, Wrench } from 'lucide-react'
+import { Check, X, Pencil, Plus, Wrench, Download } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -8,12 +8,15 @@ import { Sheet } from '@/components/ui/Sheet'
 import { supabase } from '@/lib/supabase'
 import { RegisterServiceSheet } from './RegisterServiceSheet'
 import { MajorEngineWorkSheet } from './MajorEngineWorkSheet'
+import { ExportHistorySheet } from './ExportHistorySheet'
 import { formatDateVE } from '@/lib/date'
+import type { ExportVehicleInfo } from '@/lib/exportHistory'
 import type { ServiceHistoryEntry } from '@/types'
 
 interface ServiceHistoryPanelProps {
   vin: string
   ownerId: string
+  vehicle: ExportVehicleInfo
   currentKm: number
   kmUpdatedAt: string | null
   kmMonthly: number
@@ -24,6 +27,7 @@ interface ServiceHistoryPanelProps {
 export function ServiceHistoryPanel({
   vin,
   ownerId,
+  vehicle,
   currentKm,
   kmUpdatedAt,
   kmMonthly,
@@ -31,6 +35,7 @@ export function ServiceHistoryPanel({
   onChanged,
 }: ServiceHistoryPanelProps) {
   const [engineWorkOpen, setEngineWorkOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const pending = services.filter((s) => s.status === 'pending')
   const resolved = services.filter((s) => s.status !== 'pending')
   const [modifyTarget, setModifyTarget] = useState<ServiceHistoryEntry | null>(null)
@@ -112,9 +117,18 @@ export function ServiceHistoryPanel({
       <Button
         onClick={() => setEngineWorkOpen(true)}
         variant="danger"
-        className="flex items-center justify-center gap-2 mb-3"
+        className="flex items-center justify-center gap-2 mb-1.5"
       >
         <Wrench size={16} /> Cambio o reparación mayor de motor
+      </Button>
+
+      <Button
+        onClick={() => setExportOpen(true)}
+        variant="tertiary"
+        disabled={services.length === 0}
+        className="flex items-center justify-center gap-2 mb-3"
+      >
+        <Download size={16} /> Exportar historial
       </Button>
 
       {pending.length > 0 && (
@@ -201,6 +215,8 @@ export function ServiceHistoryPanel({
         onClose={() => setEngineWorkOpen(false)}
         onSaved={onChanged}
       />
+
+      <ExportHistorySheet open={exportOpen} vehicle={vehicle} services={services} onClose={() => setExportOpen(false)} />
     </div>
   )
 }
