@@ -34,15 +34,23 @@ export function MaintenanceDashboardPage() {
   const [customItems, setCustomItems] = useState<CustomMaintItem[]>([])
   const [services, setServices] = useState<ServiceHistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('plan')
 
   async function reloadVehicles() {
     if (!userId) return
-    const { data: own } = await supabase
+    const { data: own, error } = await supabase
       .from('vehicle_ownership')
       .select('vin, plan, km_current, km_current_updated_at, km_check_freq, vehicles(*)')
       .eq('owner_id', userId)
       .is('ended_at', null)
+
+    if (error) {
+      setLoadError(error.message)
+      setLoading(false)
+      return
+    }
+    setLoadError(null)
 
     const list: OwnedVehicle[] = (own ?? [])
       .filter((row) => row.vehicles)
@@ -104,6 +112,17 @@ export function MaintenanceDashboardPage() {
     return (
       <PageShell>
         <p className="text-sm text-muted">Cargando…</p>
+      </PageShell>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <PageShell>
+        <Card accent="danger">
+          <p className="text-sm text-danger font-semibold mb-1">No se pudo cargar tus vehículos</p>
+          <p className="text-xs text-muted">{loadError}</p>
+        </Card>
       </PageShell>
     )
   }
