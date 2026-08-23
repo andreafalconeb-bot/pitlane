@@ -57,11 +57,21 @@ interface CustomItemsPanelProps {
   vin: string
   ownerId: string
   currentKm: number
+  kmUpdatedAt: string | null
+  kmMonthly: number
   items: CustomMaintItem[]
   onChanged: () => void
 }
 
-export function CustomItemsPanel({ vin, ownerId, currentKm, items, onChanged }: CustomItemsPanelProps) {
+export function CustomItemsPanel({
+  vin,
+  ownerId,
+  currentKm,
+  kmUpdatedAt,
+  kmMonthly,
+  items,
+  onChanged,
+}: CustomItemsPanelProps) {
   const [open, setOpen] = useState(false)
   const [label, setLabel] = useState('')
   const [category, setCategory] = useState('')
@@ -240,6 +250,8 @@ export function CustomItemsPanel({ vin, ownerId, currentKm, items, onChanged }: 
         vin={vin}
         ownerId={ownerId}
         currentKm={currentKm}
+        kmUpdatedAt={kmUpdatedAt}
+        kmMonthly={kmMonthly}
         customItemId={serviceItem?.id}
         defaultDescription={serviceItem?.label}
         onClose={() => setServiceItem(null)}

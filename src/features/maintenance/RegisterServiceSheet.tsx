@@ -1,15 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
-import { Upload } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, Upload } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
+import { projectKmAtDate } from '@/lib/kmProjection'
 
 interface RegisterServiceSheetProps {
   open: boolean
   vin: string
   ownerId: string
   currentKm: number
+  /** Last confirmed reading's date + declared monthly rate — the anchor used
+   * to sanity-check a km entered for a different (often backdated) date. */
+  kmUpdatedAt: string | null
+  kmMonthly: number
   /** When set, also resets this catalog item's counter (last_km/last_date). */
   catalogId?: string
   /** When set instead, resets this custom item's own last_km/last_date. */
@@ -36,6 +41,8 @@ export function RegisterServiceSheet({
   vin,
   ownerId,
   currentKm,
+  kmUpdatedAt,
+  kmMonthly,
   catalogId,
   customItemId,
   defaultDescription,
@@ -51,6 +58,20 @@ export function RegisterServiceSheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Warns — never blocks — when the km typed for this date drifts far from
+  // what the vehicle's own trend says it should be, so a backdated or
+  // mistyped reading doesn't quietly corrupt the timeline.
+  const expectedKm = useMemo(() => {
+    if (!date || kmMonthly <= 0) return null
+    return projectKmAtDate(currentKm, kmUpdatedAt, kmMonthly, date)
+  }, [date, currentKm, kmUpdatedAt, kmMonthly])
+
+  const kmValueForCheck = km ? parseInt(km, 10) : null
+  const kmMismatch =
+    expectedKm !== null &&
+    kmValueForCheck !== null &&
+    Math.abs(kmValueForCheck - expectedKm) > Math.max(500, expectedKm * 0.15)
 
   useEffect(() => {
     if (!open) return
@@ -130,6 +151,22 @@ export function RegisterServiceSheet({
       <form onSubmit={handleSubmit}>
         <Input id="rs-date" label="Fecha" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
         <Input id="rs-km" label="Kilometraje" type="number" value={km} onChange={(e) => setKm(e.target.value)} />
+        {kmMismatch && expectedKm !== null && (
+          <div className="flex items-start gap-2 -mt-1 mb-3 p-2.5 rounded-lg border border-warning bg-warning/10">
+            <AlertTriangle size={14} className="text-warning shrink-0 mt-0.5" />
+            <div className="text-[11px]">
+              Ese kilometraje no corresponde con la fecha elegida. Según tu promedio, para esa fecha deberías tener
+              aproximadamente <b>{expectedKm.toLocaleString()} km</b>.
+              <button
+                type="button"
+                onClick={() => setKm(String(expectedKm))}
+                className="block mt-1 font-semibold text-warning underline underline-offset-2"
+              >
+                Usar {expectedKm.toLocaleString()} km sugeridos
+              </button>
+            </div>
+          </div>
+        )}
         <Input
           id="rs-desc"
           label="Descripción"

@@ -223,6 +223,8 @@ export function MaintenanceDashboardPage() {
               ownerId={selected.current_owner ?? ''}
               plan={selected.plan}
               currentKm={selected.km_current ?? 0}
+              kmUpdatedAt={selected.km_current_updated_at}
+              kmMonthly={selected.km_monthly ?? 0}
               items={items}
               onChanged={refreshAll}
             />
@@ -232,6 +234,8 @@ export function MaintenanceDashboardPage() {
               vin={selected.vin}
               ownerId={selected.current_owner ?? ''}
               currentKm={selected.km_current ?? 0}
+              kmUpdatedAt={selected.km_current_updated_at}
+              kmMonthly={selected.km_monthly ?? 0}
               items={customItems}
               onChanged={refreshAll}
             />
@@ -241,6 +245,8 @@ export function MaintenanceDashboardPage() {
               vin={selected.vin}
               ownerId={selected.current_owner ?? ''}
               currentKm={selected.km_current ?? 0}
+              kmUpdatedAt={selected.km_current_updated_at}
+              kmMonthly={selected.km_monthly ?? 0}
               services={services}
               onChanged={refreshAll}
             />

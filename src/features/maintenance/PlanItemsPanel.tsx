@@ -26,14 +26,28 @@ interface PlanItemsPanelProps {
   ownerId: string
   plan: MaintPlan
   currentKm: number
+  kmUpdatedAt: string | null
+  kmMonthly: number
   items: MaintItemView[]
   onChanged: () => void
 }
 
-export function PlanItemsPanel({ vin, ownerId, plan, currentKm, items, onChanged }: PlanItemsPanelProps) {
-  const overdue = items.filter((i) => i.status === 'overdue').length
-  const soon = items.filter((i) => i.status === 'soon').length
-  const ok = items.length - overdue - soon
+export function PlanItemsPanel({
+  vin,
+  ownerId,
+  plan,
+  currentKm,
+  kmUpdatedAt,
+  kmMonthly,
+  items,
+  onChanged,
+}: PlanItemsPanelProps) {
+  // Items with their reminder off don't count toward the summary tallies —
+  // they're not being tracked, so they shouldn't read as "al día" either.
+  const counted = items.filter((i) => i.alarm_on)
+  const overdue = counted.filter((i) => i.status === 'overdue').length
+  const soon = counted.filter((i) => i.status === 'soon').length
+  const ok = counted.length - overdue - soon
   const canToggleAlarms = plan === 'configurable'
   const [error, setError] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
@@ -153,6 +167,8 @@ export function PlanItemsPanel({ vin, ownerId, plan, currentKm, items, onChanged
         vin={vin}
         ownerId={ownerId}
         currentKm={currentKm}
+        kmUpdatedAt={kmUpdatedAt}
+        kmMonthly={kmMonthly}
         catalogId={serviceItem?.id}
         defaultDescription={serviceItem?.label}
         onClose={() => setServiceItem(null)}

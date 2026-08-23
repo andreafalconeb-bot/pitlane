@@ -108,6 +108,8 @@ export interface Workshop {
 
 export type ServiceStatus = 'pending' | 'approved' | 'modified' | 'rejected'
 
+export type ServiceEventType = 'service' | 'major_engine'
+
 export interface ServiceHistoryEntry {
   id: string
   vin: string
@@ -119,6 +121,7 @@ export interface ServiceHistoryEntry {
   price: number | null
   receipt_url: string | null
   status: ServiceStatus
+  event_type: ServiceEventType
   modified_price: number | null
   modified_desc: string | null
   approved_at: string | null

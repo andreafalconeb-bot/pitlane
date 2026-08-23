@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, X, Pencil, Plus } from 'lucide-react'
+import { Check, X, Pencil, Plus, Wrench } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Sheet } from '@/components/ui/Sheet'
 import { supabase } from '@/lib/supabase'
 import { RegisterServiceSheet } from './RegisterServiceSheet'
+import { MajorEngineWorkSheet } from './MajorEngineWorkSheet'
 import { formatDateVE } from '@/lib/date'
 import type { ServiceHistoryEntry } from '@/types'
 
@@ -14,11 +15,22 @@ interface ServiceHistoryPanelProps {
   vin: string
   ownerId: string
   currentKm: number
+  kmUpdatedAt: string | null
+  kmMonthly: number
   services: ServiceHistoryEntry[]
   onChanged: () => void
 }
 
-export function ServiceHistoryPanel({ vin, ownerId, currentKm, services, onChanged }: ServiceHistoryPanelProps) {
+export function ServiceHistoryPanel({
+  vin,
+  ownerId,
+  currentKm,
+  kmUpdatedAt,
+  kmMonthly,
+  services,
+  onChanged,
+}: ServiceHistoryPanelProps) {
+  const [engineWorkOpen, setEngineWorkOpen] = useState(false)
   const pending = services.filter((s) => s.status === 'pending')
   const resolved = services.filter((s) => s.status !== 'pending')
   const [modifyTarget, setModifyTarget] = useState<ServiceHistoryEntry | null>(null)
@@ -97,6 +109,14 @@ export function ServiceHistoryPanel({ vin, ownerId, currentKm, services, onChang
         desde sus propias tarjetas en las pestañas Plan y Personalizados, para que su alarma se reinicie.
       </p>
 
+      <Button
+        onClick={() => setEngineWorkOpen(true)}
+        variant="danger"
+        className="flex items-center justify-center gap-2 mb-3"
+      >
+        <Wrench size={16} /> Cambio o reparación mayor de motor
+      </Button>
+
       {pending.length > 0 && (
         <>
           <div className="text-[10px] font-bold tracking-widest uppercase text-muted mb-2">
@@ -132,7 +152,7 @@ export function ServiceHistoryPanel({ vin, ownerId, currentKm, services, onChang
         </Card>
       )}
       {resolved.map((s) => (
-        <Card key={s.id} className="mb-2">
+        <Card key={s.id} accent={s.event_type === 'major_engine' ? 'danger' : undefined} className="mb-2">
           <div className="flex justify-between items-start gap-2">
             <div>
               <div className="text-xs font-medium">{s.modified_desc ?? s.description}</div>
@@ -140,7 +160,11 @@ export function ServiceHistoryPanel({ vin, ownerId, currentKm, services, onChang
                 {formatDateVE(s.date)} · {s.km_at_service?.toLocaleString() ?? '—'} km · {s.workshop_name}
               </div>
             </div>
-            <Badge tone={s.status === 'approved' || s.status === 'modified' ? 'success' : 'danger'}>{s.status}</Badge>
+            {s.event_type === 'major_engine' ? (
+              <Badge tone="danger">MOTOR</Badge>
+            ) : (
+              <Badge tone={s.status === 'approved' || s.status === 'modified' ? 'success' : 'danger'}>{s.status}</Badge>
+            )}
           </div>
           {(s.modified_price ?? s.price) !== null && (
             <div className="text-sm font-semibold text-accent mt-1">${(s.modified_price ?? s.price ?? 0).toFixed(2)}</div>
@@ -163,7 +187,18 @@ export function ServiceHistoryPanel({ vin, ownerId, currentKm, services, onChang
         vin={vin}
         ownerId={ownerId}
         currentKm={currentKm}
+        kmUpdatedAt={kmUpdatedAt}
+        kmMonthly={kmMonthly}
         onClose={() => setRegisterOpen(false)}
+        onSaved={onChanged}
+      />
+
+      <MajorEngineWorkSheet
+        open={engineWorkOpen}
+        vin={vin}
+        ownerId={ownerId}
+        currentKm={currentKm}
+        onClose={() => setEngineWorkOpen(false)}
         onSaved={onChanged}
       />
     </div>

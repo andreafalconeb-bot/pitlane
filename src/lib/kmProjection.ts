@@ -47,3 +47,17 @@ export function projectKmToday(lastKm: number, lastDate: string | null, monthlyK
   if (monthsElapsed <= 0) return lastKm
   return Math.round(lastKm + monthlyKm * monthsElapsed)
 }
+
+/** Same idea, but for an arbitrary target date — forward or backward from
+ * the anchor reading — so a backdated entry can be checked against what
+ * the trend says km should have been on that day. */
+export function projectKmAtDate(
+  anchorKm: number,
+  anchorDate: string | null,
+  monthlyKm: number | null,
+  targetDate: string,
+): number | null {
+  if (!anchorDate || monthlyKm === null) return null
+  const monthsDiff = (new Date(targetDate).getTime() - new Date(anchorDate).getTime()) / MS_PER_MONTH
+  return Math.round(anchorKm + monthlyKm * monthsDiff)
+}
