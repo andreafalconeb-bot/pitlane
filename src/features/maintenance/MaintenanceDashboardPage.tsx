@@ -86,6 +86,13 @@ export function MaintenanceDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVin])
 
+  // Logging/approving a service can bump vehicle_ownership.km_current and
+  // km_current_updated_at — reloadVehicleData alone won't pick that up
+  // since km_current lives in the `vehicles` list, not the per-vin state.
+  async function refreshAll() {
+    await Promise.all([reloadVehicles(), reloadVehicleData()])
+  }
+
   const selected = vehicles.find((v) => v.vin === selectedVin) ?? null
 
   const items = useMemo(() => {
@@ -168,7 +175,7 @@ export function MaintenanceDashboardPage() {
               plan={selected.plan}
               currentKm={selected.km_current ?? 0}
               items={items}
-              onChanged={reloadVehicleData}
+              onChanged={refreshAll}
             />
           )}
           {tab === 'custom' && (
@@ -184,7 +191,7 @@ export function MaintenanceDashboardPage() {
               vin={selected.vin}
               currentKm={selected.km_current ?? 0}
               services={services}
-              onChanged={reloadVehicleData}
+              onChanged={refreshAll}
             />
           )}
         </>

@@ -25,12 +25,26 @@ export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: Ser
   const [busy, setBusy] = useState(false)
   const [registerOpen, setRegisterOpen] = useState(false)
 
+  /** A confirmed service record — from a workshop or logged directly —
+   * always carries the odometer reading at that moment, so approving one
+   * is also a fresh km_current reading: bump it and reset the km-check
+   * clock, same as RegisterServiceSheet does for self-logged services. */
+  async function bumpKmIfNewer(kmAtService: number | null) {
+    if (kmAtService === null || kmAtService <= currentKm) return
+    await supabase
+      .from('vehicle_ownership')
+      .update({ km_current: kmAtService, km_current_updated_at: new Date().toISOString() })
+      .eq('vin', vin)
+      .is('ended_at', null)
+  }
+
   async function approve(s: ServiceHistoryEntry) {
     setBusy(true)
     await supabase
       .from('service_history')
       .update({ status: 'approved', approved_at: new Date().toISOString() })
       .eq('id', s.id)
+    await bumpKmIfNewer(s.km_at_service)
     setBusy(false)
     onChanged()
   }
@@ -61,6 +75,7 @@ export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: Ser
         approved_at: new Date().toISOString(),
       })
       .eq('id', modifyTarget.id)
+    await bumpKmIfNewer(modifyTarget.km_at_service)
     setBusy(false)
     setModifyTarget(null)
     onChanged()
