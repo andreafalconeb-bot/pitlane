@@ -7,27 +7,17 @@ import { Input } from '@/components/ui/Input'
 import { Sheet } from '@/components/ui/Sheet'
 import { supabase } from '@/lib/supabase'
 import { RegisterServiceSheet } from './RegisterServiceSheet'
-import { KmStatsBlock } from './KmStatsBlock'
 import { formatDateVE } from '@/lib/date'
 import type { ServiceHistoryEntry } from '@/types'
 
 interface ServiceHistoryPanelProps {
   vin: string
   currentKm: number
-  kmUpdatedAt: string | null
-  kmMonthly: number
   services: ServiceHistoryEntry[]
   onChanged: () => void
 }
 
-export function ServiceHistoryPanel({
-  vin,
-  currentKm,
-  kmUpdatedAt,
-  kmMonthly,
-  services,
-  onChanged,
-}: ServiceHistoryPanelProps) {
+export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: ServiceHistoryPanelProps) {
   const pending = services.filter((s) => s.status === 'pending')
   const resolved = services.filter((s) => s.status !== 'pending')
   const [modifyTarget, setModifyTarget] = useState<ServiceHistoryEntry | null>(null)
@@ -94,8 +84,6 @@ export function ServiceHistoryPanel({
 
   return (
     <div>
-      <KmStatsBlock currentKm={currentKm} kmUpdatedAt={kmUpdatedAt} kmMonthly={kmMonthly} services={services} />
-
       <Button
         onClick={() => setRegisterOpen(true)}
         variant="secondary"

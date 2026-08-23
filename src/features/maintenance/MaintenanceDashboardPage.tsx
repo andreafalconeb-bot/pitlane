@@ -10,6 +10,7 @@ import { CustomItemsPanel } from './CustomItemsPanel'
 import { ServiceHistoryPanel } from './ServiceHistoryPanel'
 import { KmCheckBanner } from './KmCheckBanner'
 import { ProjectedAlarmBanner } from './ProjectedAlarmBanner'
+import { KmStatsBlock } from './KmStatsBlock'
 import { EditVehicleSheet } from '@/features/vehicles/EditVehicleSheet'
 import type { CustomMaintItem, KmCheckFreq, MaintPlan, ServiceHistoryEntry, Vehicle, VehicleMaintState } from '@/types'
 
@@ -195,6 +196,13 @@ export function MaintenanceDashboardPage() {
             onSaved={reloadVehicles}
           />
 
+          <KmStatsBlock
+            currentKm={selected.km_current ?? 0}
+            kmUpdatedAt={selected.km_current_updated_at}
+            kmMonthly={selected.km_monthly ?? 0}
+            services={services}
+          />
+
           <div className="flex gap-1 mb-3 bg-surface border border-border rounded-lg p-1">
             {TABS.map((t) => (
               <button
@@ -230,8 +238,6 @@ export function MaintenanceDashboardPage() {
             <ServiceHistoryPanel
               vin={selected.vin}
               currentKm={selected.km_current ?? 0}
-              kmUpdatedAt={selected.km_current_updated_at}
-              kmMonthly={selected.km_monthly ?? 0}
               services={services}
               onChanged={refreshAll}
             />

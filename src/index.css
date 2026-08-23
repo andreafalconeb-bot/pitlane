@@ -34,3 +34,17 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Hide the native up/down spinner on number inputs — user typing the
+   value directly, no stepper arrows. */
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
