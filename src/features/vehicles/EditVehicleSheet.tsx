@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Sheet } from '@/components/ui/Sheet'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { KmRateField } from './KmRateField'
 import { supabase } from '@/lib/supabase'
 import type { MaintPlan, Vehicle } from '@/types'
 
@@ -23,6 +24,7 @@ export function EditVehicleSheet({ vehicle, onClose, onSaved }: EditVehicleSheet
   const [serialMotor, setSerialMotor] = useState('')
   const [oil, setOil] = useState('')
   const [plan, setPlan] = useState<MaintPlan>('basic')
+  const [kmMonthly, setKmMonthly] = useState(0)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,12 +40,13 @@ export function EditVehicleSheet({ vehicle, onClose, onSaved }: EditVehicleSheet
 
     supabase
       .from('vehicle_ownership')
-      .select('plan')
+      .select('plan, km_monthly')
       .eq('vin', vehicle.vin)
       .is('ended_at', null)
       .maybeSingle()
       .then(({ data }) => {
         setPlan((data?.plan as MaintPlan) ?? 'basic')
+        setKmMonthly((data?.km_monthly as number) ?? 0)
         setLoading(false)
       })
   }, [vehicle])
@@ -66,7 +69,7 @@ export function EditVehicleSheet({ vehicle, onClose, onSaved }: EditVehicleSheet
 
       const { error: pErr } = await supabase
         .from('vehicle_ownership')
-        .update({ plan })
+        .update({ plan, km_monthly: kmMonthly })
         .eq('vin', vehicle.vin)
         .is('ended_at', null)
       if (pErr) throw pErr
@@ -102,6 +105,7 @@ export function EditVehicleSheet({ vehicle, onClose, onSaved }: EditVehicleSheet
                 onChange={(e) => setSerialMotor(e.target.value)}
               />
               <Input id="e-oil" label="Aceite recomendado" value={oil} onChange={(e) => setOil(e.target.value)} />
+              <KmRateField valueMonthly={kmMonthly} onChange={setKmMonthly} />
 
               <label className="block text-xs text-muted mb-1.5 mt-1">Plan de mantenimiento</label>
               <div className="grid grid-cols-3 gap-2 mb-4">

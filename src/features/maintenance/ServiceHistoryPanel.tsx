@@ -15,11 +15,19 @@ interface ServiceHistoryPanelProps {
   vin: string
   currentKm: number
   kmUpdatedAt: string | null
+  kmMonthly: number
   services: ServiceHistoryEntry[]
   onChanged: () => void
 }
 
-export function ServiceHistoryPanel({ vin, currentKm, kmUpdatedAt, services, onChanged }: ServiceHistoryPanelProps) {
+export function ServiceHistoryPanel({
+  vin,
+  currentKm,
+  kmUpdatedAt,
+  kmMonthly,
+  services,
+  onChanged,
+}: ServiceHistoryPanelProps) {
   const pending = services.filter((s) => s.status === 'pending')
   const resolved = services.filter((s) => s.status !== 'pending')
   const [modifyTarget, setModifyTarget] = useState<ServiceHistoryEntry | null>(null)
@@ -86,7 +94,7 @@ export function ServiceHistoryPanel({ vin, currentKm, kmUpdatedAt, services, onC
 
   return (
     <div>
-      <KmStatsBlock currentKm={currentKm} kmUpdatedAt={kmUpdatedAt} services={services} />
+      <KmStatsBlock currentKm={currentKm} kmUpdatedAt={kmUpdatedAt} kmMonthly={kmMonthly} services={services} />
 
       <Button
         onClick={() => setRegisterOpen(true)}

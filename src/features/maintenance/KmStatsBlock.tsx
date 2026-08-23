@@ -7,11 +7,17 @@ import type { ServiceHistoryEntry } from '@/types'
 interface KmStatsBlockProps {
   currentKm: number
   kmUpdatedAt: string | null
+  kmMonthly: number
   services: ServiceHistoryEntry[]
 }
 
-export function KmStatsBlock({ currentKm, kmUpdatedAt, services }: KmStatsBlockProps) {
-  const monthlyKm = useMemo(() => {
+/** km_monthly is what the owner declared at registration (and can rectify
+ * later in Editar vehículo) — that's the source of truth for the
+ * projection, not something inferred from however many readings happen to
+ * be on file. The historical rate is only surfaced as a suggestion, in
+ * case it drifts noticeably from what's declared. */
+export function KmStatsBlock({ currentKm, kmUpdatedAt, kmMonthly, services }: KmStatsBlockProps) {
+  const historicalKm = useMemo(() => {
     const points = services
       .filter((s) => (s.status === 'approved' || s.status === 'modified') && s.km_at_service !== null)
       .map((s) => ({ date: s.date, km: s.km_at_service as number }))
@@ -21,7 +27,8 @@ export function KmStatsBlock({ currentKm, kmUpdatedAt, services }: KmStatsBlockP
     return calculateMonthlyKm(points)
   }, [services, kmUpdatedAt, currentKm])
 
-  const projected = projectKmToday(currentKm, kmUpdatedAt, monthlyKm)
+  const projected = projectKmToday(currentKm, kmUpdatedAt, kmMonthly)
+  const showRectifyHint = historicalKm !== null && Math.abs(historicalKm - kmMonthly) / Math.max(kmMonthly, 1) > 0.2
 
   return (
     <Card className="mb-3">
@@ -33,13 +40,19 @@ export function KmStatsBlock({ currentKm, kmUpdatedAt, services }: KmStatsBlockP
         </div>
         <div className="flex justify-between items-center">
           <span className="text-muted">Km mensuales calculados</span>
-          <span className="font-semibold">{monthlyKm !== null ? `${monthlyKm.toLocaleString()} km` : '—'}</span>
+          <span className="font-semibold">{kmMonthly > 0 ? `${kmMonthly.toLocaleString()} km` : '—'}</span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-muted">Km proyectados a la fecha de hoy</span>
           <span className="font-semibold text-accent">{projected.toLocaleString()} km</span>
         </div>
       </div>
+      {showRectifyHint && (
+        <p className="text-[10px] text-warning mt-2.5 pt-2.5 border-t border-border">
+          Tu historial reciente sugiere un promedio distinto: ~{historicalKm!.toLocaleString()} km/mes. Puedes
+          rectificarlo en Editar vehículo.
+        </p>
+      )}
     </Card>
   )
 }

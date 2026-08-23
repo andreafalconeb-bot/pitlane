@@ -17,6 +17,7 @@ interface OwnedVehicle extends Vehicle {
   km_current: number
   km_current_updated_at: string | null
   km_check_freq: KmCheckFreq
+  km_monthly: number
 }
 
 type Tab = 'plan' | 'custom' | 'historial'
@@ -43,7 +44,7 @@ export function MaintenanceDashboardPage() {
     if (!userId) return
     const { data: own, error } = await supabase
       .from('vehicle_ownership')
-      .select('vin, plan, km_current, km_current_updated_at, km_check_freq, vehicles(*)')
+      .select('vin, plan, km_current, km_current_updated_at, km_check_freq, km_monthly, vehicles(*)')
       .eq('owner_id', userId)
       .is('ended_at', null)
 
@@ -62,6 +63,7 @@ export function MaintenanceDashboardPage() {
         km_current: row.km_current as number,
         km_current_updated_at: row.km_current_updated_at as string | null,
         km_check_freq: row.km_check_freq as KmCheckFreq,
+        km_monthly: (row.km_monthly as number) ?? 0,
       }))
 
     setVehicles(list)
@@ -218,6 +220,7 @@ export function MaintenanceDashboardPage() {
               vin={selected.vin}
               currentKm={selected.km_current ?? 0}
               kmUpdatedAt={selected.km_current_updated_at}
+              kmMonthly={selected.km_monthly ?? 0}
               services={services}
               onChanged={refreshAll}
             />

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { DocumentScanner } from '@/features/scanner/DocumentScanner'
 import { VinPhotoButton } from '@/features/scanner/VinPhotoButton'
+import { KmRateField } from './KmRateField'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import type { VehicleData } from '@/lib/ocr'
@@ -45,6 +46,8 @@ export function RegisterVehiclePage() {
   const navigate = useNavigate()
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [plan, setPlan] = useState<MaintPlan>('basic')
+  const [kmCurrent, setKmCurrent] = useState('')
+  const [kmMonthly, setKmMonthly] = useState(0)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [vinScanError, setVinScanError] = useState<string | null>(null)
@@ -93,6 +96,8 @@ export function RegisterVehiclePage() {
         return
       }
 
+      const kmCurrentValue = kmCurrent ? parseInt(kmCurrent, 10) : 0
+
       const { data: existing } = await supabase.from('vehicles').select('vin').eq('vin', vin).maybeSingle()
 
       if (existing) {
@@ -100,6 +105,8 @@ export function RegisterVehiclePage() {
           p_vin: vin,
           p_code: form.code.trim() || null,
           p_plan: plan,
+          p_km_current: kmCurrentValue,
+          p_km_monthly: kmMonthly,
         })
         if (claimErr) throw claimErr
         setLucky(true)
@@ -127,6 +134,9 @@ export function RegisterVehiclePage() {
           vin,
           owner_id: userId,
           plan,
+          km_current: kmCurrentValue,
+          km_monthly: kmMonthly,
+          km_current_updated_at: new Date().toISOString(),
         })
         if (ownErr) throw ownErr
       }
@@ -190,6 +200,14 @@ export function RegisterVehiclePage() {
         <Input id="year" label="Año" type="number" {...field('year')} required />
         <Input id="color" label="Color" {...field('color')} />
         <Input id="serialMotor" label="Serial de motor" {...field('serialMotor')} />
+        <Input
+          id="kmCurrent"
+          label="Kilometraje actual"
+          type="number"
+          value={kmCurrent}
+          onChange={(e) => setKmCurrent(e.target.value)}
+        />
+        <KmRateField valueMonthly={kmMonthly} onChange={setKmMonthly} />
         <Input
           id="code"
           label="Código de traslado (solo si te lo dieron)"
