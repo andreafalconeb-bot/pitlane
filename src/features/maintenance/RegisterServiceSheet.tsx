@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, Upload } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { Input } from '@/components/ui/Input'
+import { DateInputVE } from '@/components/ui/DateInputVE'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { projectKmAtDate } from '@/lib/kmProjection'
@@ -149,7 +150,7 @@ export function RegisterServiceSheet({
   return (
     <Sheet open={open} onClose={onClose} title="Registrar servicio">
       <form onSubmit={handleSubmit}>
-        <Input id="rs-date" label="Fecha" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+        <DateInputVE id="rs-date" label="Fecha" value={date} onChange={setDate} required />
         <Input id="rs-km" label="Kilometraje" type="number" value={km} onChange={(e) => setKm(e.target.value)} />
         {kmMismatch && expectedKm !== null && (
           <div className="flex items-start gap-2 -mt-1 mb-3 p-2.5 rounded-lg border border-warning bg-warning/10">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Upload } from 'lucide-react'
 import { Sheet } from '@/components/ui/Sheet'
 import { Input } from '@/components/ui/Input'
+import { DateInputVE } from '@/components/ui/DateInputVE'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 
@@ -133,7 +134,7 @@ export function MajorEngineWorkSheet({ open, vin, ownerId, currentKm, onClose, o
           ))}
         </div>
 
-        <Input id="mw-date" label="Fecha" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+        <DateInputVE id="mw-date" label="Fecha" value={date} onChange={setDate} required />
         <Input id="mw-km" label="Kilometraje" type="number" value={km} onChange={(e) => setKm(e.target.value)} required />
 
         {workType === 'cambio' && (
