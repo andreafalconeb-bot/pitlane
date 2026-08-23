@@ -9,6 +9,7 @@ import { PlanItemsPanel } from './PlanItemsPanel'
 import { CustomItemsPanel } from './CustomItemsPanel'
 import { ServiceHistoryPanel } from './ServiceHistoryPanel'
 import { KmCheckBanner } from './KmCheckBanner'
+import { EditVehicleSheet } from '@/features/vehicles/EditVehicleSheet'
 import type { CustomMaintItem, KmCheckFreq, MaintPlan, ServiceHistoryEntry, Vehicle, VehicleMaintState } from '@/types'
 
 interface OwnedVehicle extends Vehicle {
@@ -36,6 +37,7 @@ export function MaintenanceDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('plan')
+  const [editOpen, setEditOpen] = useState(false)
 
   async function reloadVehicles() {
     if (!userId) return
@@ -163,7 +165,13 @@ export function MaintenanceDashboardPage() {
             <div className="text-sm font-semibold">
               {selected.brand} {selected.model}
             </div>
-            <Badge tone="accent">Plan {selected.plan}</Badge>
+            <button
+              onClick={() => setEditOpen(true)}
+              aria-label="Editar plan de mantenimiento"
+              className="min-h-11 flex items-center px-1"
+            >
+              <Badge tone="accent">Plan {selected.plan}</Badge>
+            </button>
           </Card>
 
           <KmCheckBanner
@@ -209,10 +217,13 @@ export function MaintenanceDashboardPage() {
             <ServiceHistoryPanel
               vin={selected.vin}
               currentKm={selected.km_current ?? 0}
+              kmUpdatedAt={selected.km_current_updated_at}
               services={services}
               onChanged={refreshAll}
             />
           )}
+
+          <EditVehicleSheet vehicle={editOpen ? selected : null} onClose={() => setEditOpen(false)} onSaved={refreshAll} />
         </>
       )}
     </PageShell>

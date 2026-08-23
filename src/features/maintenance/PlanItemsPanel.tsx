@@ -135,12 +135,13 @@ export function PlanItemsPanel({ vin, plan, currentKm, items, onChanged }: PlanI
               {!item.alarm_on && <span className="text-[10px] text-muted">Recordatorio desactivado</span>}
             </div>
           )}
-          <button
+          <Button
+            variant="secondary"
             onClick={() => setServiceItem(item)}
-            className="text-xs text-accent font-semibold mt-2 min-h-9 flex items-center gap-1.5"
+            className="mt-2.5 flex items-center justify-center gap-1.5"
           >
-            <CheckCircle2 size={14} /> Marcar como realizado
-          </button>
+            <CheckCircle2 size={14} /> Registrar servicio
+          </Button>
         </Card>
       ))}
 

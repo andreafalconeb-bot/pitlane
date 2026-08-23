@@ -7,16 +7,19 @@ import { Input } from '@/components/ui/Input'
 import { Sheet } from '@/components/ui/Sheet'
 import { supabase } from '@/lib/supabase'
 import { RegisterServiceSheet } from './RegisterServiceSheet'
+import { KmStatsBlock } from './KmStatsBlock'
+import { formatDateVE } from '@/lib/date'
 import type { ServiceHistoryEntry } from '@/types'
 
 interface ServiceHistoryPanelProps {
   vin: string
   currentKm: number
+  kmUpdatedAt: string | null
   services: ServiceHistoryEntry[]
   onChanged: () => void
 }
 
-export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: ServiceHistoryPanelProps) {
+export function ServiceHistoryPanel({ vin, currentKm, kmUpdatedAt, services, onChanged }: ServiceHistoryPanelProps) {
   const pending = services.filter((s) => s.status === 'pending')
   const resolved = services.filter((s) => s.status !== 'pending')
   const [modifyTarget, setModifyTarget] = useState<ServiceHistoryEntry | null>(null)
@@ -83,12 +86,14 @@ export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: Ser
 
   return (
     <div>
+      <KmStatsBlock currentKm={currentKm} kmUpdatedAt={kmUpdatedAt} services={services} />
+
       <Button
         onClick={() => setRegisterOpen(true)}
         variant="secondary"
         className="flex items-center justify-center gap-2 mb-3"
       >
-        <Plus size={16} /> Registrar trabajo realizado
+        <Plus size={16} /> Registrar servicio
       </Button>
 
       {pending.length > 0 && (
@@ -100,7 +105,7 @@ export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: Ser
             <Card key={s.id} accent="warning" className="mb-2">
               <div className="text-xs font-medium">{s.description}</div>
               <div className="text-[10px] text-muted mt-0.5">
-                {s.date} · {s.km_at_service?.toLocaleString() ?? '—'} km · {s.workshop_name}
+                {formatDateVE(s.date)} · {s.km_at_service?.toLocaleString() ?? '—'} km · {s.workshop_name}
               </div>
               {s.price !== null && <div className="text-sm font-semibold text-accent mt-1">${s.price.toFixed(2)}</div>}
               <div className="flex gap-2 mt-2.5">
@@ -131,7 +136,7 @@ export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: Ser
             <div>
               <div className="text-xs font-medium">{s.modified_desc ?? s.description}</div>
               <div className="text-[10px] text-muted mt-0.5">
-                {s.date} · {s.km_at_service?.toLocaleString() ?? '—'} km · {s.workshop_name}
+                {formatDateVE(s.date)} · {s.km_at_service?.toLocaleString() ?? '—'} km · {s.workshop_name}
               </div>
             </div>
             <Badge tone={s.status === 'approved' || s.status === 'modified' ? 'success' : 'danger'}>{s.status}</Badge>

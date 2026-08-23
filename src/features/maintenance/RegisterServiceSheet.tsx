@@ -95,7 +95,7 @@ export function RegisterServiceSheet({
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Registrar trabajo realizado">
+    <Sheet open={open} onClose={onClose} title="Registrar servicio">
       <form onSubmit={handleSubmit}>
         <Input id="rs-date" label="Fecha" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
         <Input id="rs-km" label="Kilometraje" type="number" value={km} onChange={(e) => setKm(e.target.value)} />
