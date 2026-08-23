@@ -220,6 +220,7 @@ export function MaintenanceDashboardPage() {
           {tab === 'plan' && (
             <PlanItemsPanel
               vin={selected.vin}
+              ownerId={selected.current_owner ?? ''}
               plan={selected.plan}
               currentKm={selected.km_current ?? 0}
               items={items}
@@ -230,13 +231,15 @@ export function MaintenanceDashboardPage() {
             <CustomItemsPanel
               vin={selected.vin}
               ownerId={selected.current_owner ?? ''}
+              currentKm={selected.km_current ?? 0}
               items={customItems}
-              onChanged={reloadVehicleData}
+              onChanged={refreshAll}
             />
           )}
           {tab === 'historial' && (
             <ServiceHistoryPanel
               vin={selected.vin}
+              ownerId={selected.current_owner ?? ''}
               currentKm={selected.km_current ?? 0}
               services={services}
               onChanged={refreshAll}

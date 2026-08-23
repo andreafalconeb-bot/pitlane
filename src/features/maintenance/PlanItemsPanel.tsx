@@ -23,13 +23,14 @@ const STATUS_TONE: Record<MaintItemView['status'], 'danger' | 'warning' | 'succe
 
 interface PlanItemsPanelProps {
   vin: string
+  ownerId: string
   plan: MaintPlan
   currentKm: number
   items: MaintItemView[]
   onChanged: () => void
 }
 
-export function PlanItemsPanel({ vin, plan, currentKm, items, onChanged }: PlanItemsPanelProps) {
+export function PlanItemsPanel({ vin, ownerId, plan, currentKm, items, onChanged }: PlanItemsPanelProps) {
   const overdue = items.filter((i) => i.status === 'overdue').length
   const soon = items.filter((i) => i.status === 'soon').length
   const ok = items.length - overdue - soon
@@ -150,6 +151,7 @@ export function PlanItemsPanel({ vin, plan, currentKm, items, onChanged }: PlanI
       <RegisterServiceSheet
         open={!!serviceItem}
         vin={vin}
+        ownerId={ownerId}
         currentKm={currentKm}
         catalogId={serviceItem?.id}
         defaultDescription={serviceItem?.label}

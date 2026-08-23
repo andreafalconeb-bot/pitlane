@@ -12,12 +12,13 @@ import type { ServiceHistoryEntry } from '@/types'
 
 interface ServiceHistoryPanelProps {
   vin: string
+  ownerId: string
   currentKm: number
   services: ServiceHistoryEntry[]
   onChanged: () => void
 }
 
-export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: ServiceHistoryPanelProps) {
+export function ServiceHistoryPanel({ vin, ownerId, currentKm, services, onChanged }: ServiceHistoryPanelProps) {
   const pending = services.filter((s) => s.status === 'pending')
   const resolved = services.filter((s) => s.status !== 'pending')
   const [modifyTarget, setModifyTarget] = useState<ServiceHistoryEntry | null>(null)
@@ -87,10 +88,14 @@ export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: Ser
       <Button
         onClick={() => setRegisterOpen(true)}
         variant="secondary"
-        className="flex items-center justify-center gap-2 mb-3"
+        className="flex items-center justify-center gap-2 mb-1.5"
       >
-        <Plus size={16} /> Registrar servicio
+        <Plus size={16} /> Registrar servicio libre
       </Button>
+      <p className="text-[10px] text-muted mb-3">
+        Solo para trabajos sueltos que no forman parte del plan ni de tus ítems personalizados. Esos se registran
+        desde sus propias tarjetas en las pestañas Plan y Personalizados, para que su alarma se reinicie.
+      </p>
 
       {pending.length > 0 && (
         <>
@@ -156,6 +161,7 @@ export function ServiceHistoryPanel({ vin, currentKm, services, onChanged }: Ser
       <RegisterServiceSheet
         open={registerOpen}
         vin={vin}
+        ownerId={ownerId}
         currentKm={currentKm}
         onClose={() => setRegisterOpen(false)}
         onSaved={onChanged}
