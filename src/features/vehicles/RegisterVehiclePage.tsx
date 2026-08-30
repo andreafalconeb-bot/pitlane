@@ -97,8 +97,12 @@ export function RegisterVehiclePage() {
         setError('Completa VIN, marca, modelo y año.')
         return
       }
+      if (!kmCurrent) {
+        setError('Indica el kilometraje actual del vehículo.')
+        return
+      }
 
-      const kmCurrentValue = kmCurrent ? parseInt(kmCurrent, 10) : 0
+      const kmCurrentValue = parseInt(kmCurrent, 10)
 
       const { data: existing } = await supabase.from('vehicles').select('vin').eq('vin', vin).maybeSingle()
 
@@ -215,15 +219,16 @@ export function RegisterVehiclePage() {
         <Input id="brand" label="Marca" {...field('brand')} required />
         <Input id="model" label="Modelo" {...field('model')} required />
         <Input id="year" label="Año" type="number" {...field('year')} required />
-        <Input id="color" label="Color" {...field('color')} />
-        <Input id="serialMotor" label="Serial de motor" {...field('serialMotor')} />
         <Input
           id="kmCurrent"
           label="Kilometraje actual"
           type="number"
           value={kmCurrent}
           onChange={(e) => setKmCurrent(e.target.value)}
+          required
         />
+        <Input id="color" label="Color" {...field('color')} />
+        <Input id="serialMotor" label="Serial de motor" {...field('serialMotor')} />
         <KmRateField valueMonthly={kmMonthly} onChange={setKmMonthly} />
         <Input
           id="code"
