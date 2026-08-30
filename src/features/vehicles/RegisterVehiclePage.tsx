@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { DocumentScanner } from '@/features/scanner/DocumentScanner'
 import { VinPhotoButton } from '@/features/scanner/VinPhotoButton'
 import { KmRateField } from './KmRateField'
+import { PlanOnboardingStep } from './PlanOnboardingStep'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import type { VehicleData } from '@/lib/ocr'
@@ -54,6 +55,7 @@ export function RegisterVehiclePage() {
   const [vinRawText, setVinRawText] = useState<string | null>(null)
   const [showVinRaw, setShowVinRaw] = useState(false)
   const [lucky, setLucky] = useState(false)
+  const [registered, setRegistered] = useState<{ vin: string; plan: MaintPlan; km: number } | null>(null)
 
   function applyScan(data: VehicleData) {
     setForm((f) => ({
@@ -110,6 +112,8 @@ export function RegisterVehiclePage() {
         })
         if (claimErr) throw claimErr
         setLucky(true)
+        navigate('/mantenimiento')
+        return
       } else {
         const { error: insErr } = await supabase.from('vehicles').insert({
           vin,
@@ -139,14 +143,27 @@ export function RegisterVehiclePage() {
           km_current_updated_at: new Date().toISOString(),
         })
         if (ownErr) throw ownErr
-      }
 
-      navigate('/mantenimiento')
+        setRegistered({ vin, plan, km: kmCurrentValue })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo registrar el vehículo')
     } finally {
       setSaving(false)
     }
+  }
+
+  if (registered) {
+    return (
+      <PageShell>
+        <PlanOnboardingStep
+          vin={registered.vin}
+          plan={registered.plan}
+          currentKm={registered.km}
+          onDone={() => navigate('/mantenimiento')}
+        />
+      </PageShell>
+    )
   }
 
   return (
